@@ -12,9 +12,9 @@ services:
     container_name: service_redis
     image: redis:6.0.6
     volumes:
-      - ./datas/redis:/data/redis
-      - ./confs/redis/redis.conf:/usr/local/etc/redis/redis.conf
-      - ./logs/redis:/logs/redis
+      - ./build/confs/redis/redis.conf:/usr/local/etc/redis/redis.conf
+      - ./runtime/datas/redis:/data/redis
+      - ./runtime/logs/redis:/logs/redis
     command: redis-server /usr/local/etc/redis/redis.conf
     #   #  两个写入操作 只是为了解决启动后警告 可以去掉
     #    /bin/bash -c "echo 511 > /proc/sys/net/core/somaxconn
@@ -36,17 +36,17 @@ services:
     #   POSTGRES_PASSWORD: Aa11111111
     #   POSTGRES_DB: postgres
     build:
-      context: .
-      dockerfile: ./Dockerfiles/service_pg/Dockerfile
+      context: ./build/Dockerfiles/service_pg
+      dockerfile: Dockerfile
     healthcheck:
       test: [ "CMD", "pg_isready", "-q", "-d", "postgres", "-U", "llf"]
       timeout: 45s
       interval: 10s
       retries: 10
     volumes:
-      - ./datas/postgresql/pgdata:/var/lib/postgresql/data
-      - ./confs/postgresql/init-user-db.sh:/docker-entrypoint-initdb.d/init-user-db.sh
-      - ./confs/postgresql/public.sql:/docker-entrypoint-initdb.d/public.sql
+      - ./build/confs/postgresql/init-user-db.sh:/docker-entrypoint-initdb.d/init-user-db.sh
+      - ./build/confs/postgresql/public.sql:/docker-entrypoint-initdb.d/public.sql
+      - ./runtime/datas/postgresql/pgdata:/var/lib/postgresql/data
     ports:
       - 15432:5432
     networks:
@@ -56,8 +56,8 @@ services:
   service_backend:
     container_name: service_backend
     build:
-      context: .
-      dockerfile: ./Dockerfiles/service_backend/Dockerfile
+      context: ./build/Dockerfiles/service_backend
+      # dockerfile: Dockerfile
     environment:
       ENV_TYPE: "pro"  # 环境配置： dev or pro
     ports:
@@ -65,7 +65,7 @@ services:
       - "443:443"
     volumes:
       # - .:/home/deploy/dockerfiles
-      - "./logs/nginx:/var/log/nginx"
+      - "./runtime/logs/nginx:/var/log/nginx"
     depends_on:
       - service_redis
       - service_pg

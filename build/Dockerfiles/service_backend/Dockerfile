@@ -29,4 +29,4 @@ RUN apt install -y python$PY_VERSION python$PY_VERSION-dev
 RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python$PY_VERSION
 
 CMD ["nginx", "-g", "daemon off;"]
-# CMD ["sh", "/home/deploy/dockerfiles/confs/backend/run.sh"]
+# CMD ["sh", "/home/deploy/dockerfiles/build/confs/backend/run.sh"]

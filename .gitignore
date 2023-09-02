@@ -7,14 +7,14 @@
 
 # docker
 # redis
-datas/redis/*
+runtime/datas/redis/*
 # uwsgi
-datas/uwsgi/pid/*
+runtime/datas/uwsgi/pid/*
 # pg
-datas/postgresql/*/*
+runtime/datas/postgresql/*/*
 
 # log
-confs/logs/*/*
+runtime/logs/*/*
 *.log
 
 # other
