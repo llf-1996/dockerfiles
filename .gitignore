@@ -10,6 +10,8 @@
 runtime/datas/redis/*
 # uwsgi
 runtime/datas/uwsgi/pid/*
+# gunicorn
+runtime/datas/gunicorn/pid/*
 # pg
 runtime/datas/postgresql/*/*
 
