@@ -1,82 +1,98 @@
 version: "3.0"
 
 services:
-  service_client_builder:
-    container_name: service_client_builder
-    image: "node:18"
-    volumes:
-      - ".:/home/deployment/ClientProject"
-    command: sh -c "cd /home/deployment/ClientProject && npm i && npm run build-only"
-
-  service_redis:
-    container_name: service_redis
-    image: redis:6.0.6
-    volumes:
-      - ./build/confs/redis/redis.conf:/usr/local/etc/redis/redis.conf
-      - ./runtime/datas/redis:/data/redis
-      - ./runtime/logs/redis:/logs/redis
-    command: redis-server /usr/local/etc/redis/redis.conf
-    #   #  两个写入操作 只是为了解决启动后警告 可以去掉
-    #    /bin/bash -c "echo 511 > /proc/sys/net/core/somaxconn
-    #    && echo never > /sys/kernel/mm/transparent_hugepage/enabled
-    #    && redis-server /usr/local/etc/redis/redis.conf"
-    ports:
-      # 使用宿主机的端口映射到容器的端口
-      # 宿主机：容器
-      - 16379:6379
-    networks:
-      service_net:
-        ipv4_address: 172.19.0.20
-
-  service_pg:
-    container_name: service_pg
-    # image: postgres:14
-    # environment:
-    #   POSTGRES_USER: llf
-    #   POSTGRES_PASSWORD: Aa11111111
-    #   POSTGRES_DB: postgres
-    build:
-      context: ./build/Dockerfiles/service_pg
-      dockerfile: Dockerfile
-    healthcheck:
-      test: [ "CMD", "pg_isready", "-q", "-d", "postgres", "-U", "llf"]
-      timeout: 45s
-      interval: 10s
-      retries: 10
-    volumes:
-      - ./build/confs/postgresql/init-user-db.sh:/docker-entrypoint-initdb.d/init-user-db.sh
-      - ./build/confs/postgresql/public.sql:/docker-entrypoint-initdb.d/public.sql
-      - ./runtime/datas/postgresql/pgdata:/var/lib/postgresql/data
-    ports:
-      - 15432:5432
-    networks:
-      service_net:
-        ipv4_address: 172.19.0.30
-
-  service_backend:
-    container_name: service_backend
-    build:
-      context: ./build/Dockerfiles/service_backend
-      # dockerfile: Dockerfile
+#  service_client_builder:
+#    container_name: service_client_builder
+#    image: "node:18"
+#    volumes:
+#      - ".:/home/deployment/ClientProject"
+#    command: sh -c "cd /home/deployment/ClientProject && npm i && npm run build-only"
+#
+#  service_redis:
+#    container_name: service_redis
+#    image: redis:6.0.6
+#    volumes:
+#      - ./build/confs/redis/redis.conf:/usr/local/etc/redis/redis.conf
+#      - ./runtime/datas/redis:/data/redis
+#      - ./runtime/logs/redis:/logs/redis
+#    command: redis-server /usr/local/etc/redis/redis.conf
+#    #   #  两个写入操作 只是为了解决启动后警告 可以去掉
+#    #    /bin/bash -c "echo 511 > /proc/sys/net/core/somaxconn
+#    #    && echo never > /sys/kernel/mm/transparent_hugepage/enabled
+#    #    && redis-server /usr/local/etc/redis/redis.conf"
+#    ports:
+#      # 使用宿主机的端口映射到容器的端口
+#      # 宿主机：容器
+#      - 16379:6379
+#    networks:
+#      service_net:
+#        ipv4_address: 172.19.0.20
+#
+#  service_pg:
+#    container_name: service_pg
+#    # image: postgres:14
+#    # environment:
+#    #   POSTGRES_USER: llf
+#    #   POSTGRES_PASSWORD: Aa11111111
+#    #   POSTGRES_DB: postgres
+#    build:
+#      context: ./build/Dockerfiles/service_pg
+#      dockerfile: Dockerfile
+#    healthcheck:
+#      test: [ "CMD", "pg_isready", "-q", "-d", "postgres", "-U", "llf"]
+#      timeout: 45s
+#      interval: 10s
+#      retries: 10
+#    volumes:
+#      - ./build/confs/postgresql/init-user-db.sh:/docker-entrypoint-initdb.d/init-user-db.sh
+#      - ./build/confs/postgresql/public.sql:/docker-entrypoint-initdb.d/public.sql
+#      - ./runtime/datas/postgresql/pgdata:/var/lib/postgresql/data
+#    ports:
+#      - 15432:5432
+#    networks:
+#      service_net:
+#        ipv4_address: 172.19.0.30
+  
+  service_mysql:
+    container_name: service_mysql
+    image: mysql:8.0.18  # 或其它mysql版本
     environment:
-      ENV_TYPE: "pro"  # 环境配置： dev or pro
-    ports:
-      - "80:80"
-      - "443:443"
+      - MYSQL_ROOT_PASSWORD=123456  # root用户密码
+      # - TZ=Asia/Shanghai # 设置容器时区 我这里通过下面挂载方式同步的宿主机时区和时间了,这里忽略
     volumes:
-      # - .:/home/deploy/dockerfiles
-      - "./runtime/logs/nginx:/var/log/nginx"
-    depends_on:
-      - service_redis
-      - service_pg
+      - ./runtime/logs/mysql8:/var/log/mysql  # 映射日志目录，宿主机:容器
+      - ./runtime/datas/mysql8:/var/lib/mysql  # 映射数据目录，宿主机:容器
+      - ./build/confs/mysql8/conf.d:/etc/mysql/conf.d:ro  # 映射配置目录，宿主机:容器
+    ports:
+      - 13306:3306 # 指定宿主机端口与容器端口映射关系，宿主机:容器
     networks:
       service_net:
-        ipv4_address: 172.19.0.10
-    ulimits:
-      nproc: 65535
-      nofile:
-        soft: 20000
-        hard: 40000
+        ipv4_address: 172.19.0.40
+
+#  service_backend:
+#    container_name: service_backend
+#    build:
+#      context: ./build/Dockerfiles/service_backend
+#      # dockerfile: Dockerfile
+#    environment:
+#      ENV_TYPE: "pro"  # 环境配置： dev or pro
+#    ports:
+#      - "80:80"
+#      - "443:443"
+#    volumes:
+#      # - .:/home/deploy/dockerfiles
+#      - "./runtime/logs/nginx:/var/log/nginx"
+#    depends_on:
+#      - service_redis
+#      - service_pg
+#    networks:
+#      service_net:
+#        ipv4_address: 172.19.0.10
+#    ulimits:
+#      nproc: 65535
+#      nofile:
+#        soft: 20000
+#        hard: 40000
 
 networks:
   service_net:

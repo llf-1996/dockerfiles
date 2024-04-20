@@ -14,6 +14,8 @@ runtime/datas/uwsgi/pid/*
 runtime/datas/gunicorn/pid/*
 # pg
 runtime/datas/postgresql/*/*
+# pg
+runtime/datas/mysql8/*
 
 # log
 runtime/logs/*/*
